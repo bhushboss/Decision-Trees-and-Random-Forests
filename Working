@@ -1,0 +1,47 @@
+First, load the data, which contains 1025 entries and 14 columns (13 features and 1 target variable).
+All data was numeric and complete, so no preprocessing was needed.
+The data was split into a 70% training set and a 30% test set for initial model building.
+1. & 2. Decision Tree, Visualization, and Overfitting
+To understand decision trees and overfitting,
+trained two separate models:
+Full-Depth Tree (Prone to Overfitting):
+Training Accuracy: 1.0000 (100%)
+Test Accuracy: 0.9708 (97.1%)
+Analysis: The 100% training accuracy is a classic sign of overfitting. 
+The model has "memorized" the training data perfectly, but this doesn't fully translate to unseen test data.
+Pruned Tree (Controlled for Overfitting): To create a simpler, more generalizable model, I limited the tree's depth to 4 levels.
+Training Accuracy: 0.8968 (89.7%)
+Test Accuracy: 0.8344 (83.4%)
+Analysis: This model's training and test accuracies are much closer, indicating it is less overfit and provides a more realistic estimate of its performance on new data.
+Here is the visualization of the pruned decision tree (max_depth=4).
+You can read it from the top down to see the rules it learned to classify patients.
+3. Random Forest and Accuracy Comparison
+Next, I trained a Random Forest, which is an ensemble model that builds many decision trees and combines their outputs.
+Random Forest Test Accuracy: 0.9805 (98.1%)
+Comparison:
+Pruned Decision Tree: 83.44\%
+Full Decision Tree: 97.08\%
+Random Forest: 98.05\%
+The Random Forest outperformed both single decision trees on the test set, demonstrating the robustness of ensemble methods.
+4. Feature Importances
+A key benefit of tree-based models is interpreting feature importance. This tells us which features the model used most to make its predictions. 
+The Random Forest identified the following as the most important factors:
+Feature Importance
+cp (chest pain type) 0.1323
+thalach (max heart rate) 0.1250
+ca (number of major vessels) 0.1229
+oldpeak (ST depression) 0.1229
+thal (thalassemia type) 0.1130
+fbs (fasting blood sugar) 0.0097
+This visualizes the importances for all features, with cp (chest pain type) being the most significant.
+5. Evaluation Using Cross-Validation
+Finally, I performed 10-fold cross-validation on the entire dataset to get the most robust and reliable measure of model performance.
+This test trains and validates the model 10 separate times on different subsets of the data.
+Pruned Decision Tree (10-fold CV):
+Mean Accuracy: 0.8429 (84.3%)
+Standard Deviation: 0.0397 (Consistent, but some variance)
+Random Forest (10-fold CV):
+Mean Accuracy: 0.9971 (99.7%)
+Standard Deviation: 0.0088 (Extremely consistent)
+Conclusion: The cross-validation confirms that the Random Forest is the superior model for this dataset, with an outstanding and highly stable mean accuracy of 99.7%.
+The pruned Decision Tree is a much simpler and more interpretable model, but it comes at the cost of significantly lower (though still good) predictive accuracy.

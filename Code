@@ -1,0 +1,124 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.tree import DecisionTreeClassifier, plot_tree, export_graphviz
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
+import numpy as np
+
+# --- 0. Load and Prepare Data ---
+print("--- 0. Loading and Preparing Data ---")
+file_path = 'heart.csv'
+df = pd.read_csv(file_path)
+
+# Define features (X) and target (y)
+X = df.drop('target', axis=1)
+y = df['target']
+feature_names = X.columns.tolist()
+class_names = ['No Heart Disease', 'Heart Disease']
+
+# Split data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+print(f"Training data shape: {X_train.shape}")
+print(f"Test data shape: {X_test.shape}")
+print("--- Done ---")
+
+
+# --- 1. & 2. Train Decision Tree, Analyze Overfitting & Visualize ---
+print("\n--- 1 & 2. Training Decision Tree & Analyzing Overfitting ---")
+
+# First, train a "full" (unpruned) tree to demonstrate overfitting
+dt_full = DecisionTreeClassifier(random_state=42)
+dt_full.fit(X_train, y_train)
+y_train_pred_full = dt_full.predict(X_train)
+y_test_pred_full = dt_full.predict(X_test)
+print(f"Full Tree Training Accuracy (Overfit): {accuracy_score(y_train, y_train_pred_full):.4f}")
+print(f"Full Tree Test Accuracy: {accuracy_score(y_test, y_test_pred_full):.4f}")
+
+# Second, train a "pruned" tree (controlling depth) to prevent overfitting
+dt_pruned = DecisionTreeClassifier(max_depth=4, random_state=42)
+dt_pruned.fit(X_train, y_train)
+y_train_pred_pruned = dt_pruned.predict(X_train)
+y_test_pred_pruned = dt_pruned.predict(X_test)
+print(f"Pruned Tree (max_depth=4) Training Accuracy: {accuracy_score(y_train, y_train_pred_pruned):.4f}")
+print(f"Pruned Tree (max_depth=4) Test Accuracy: {accuracy_score(y_test, y_test_pred_pruned):.4f}")
+
+# Visualize the tree using Scikit-learn's built-in 'plot_tree' (matplotlib)
+print("\nGenerating visualization with plot_tree (decision_tree_matplotlib.png)...")
+plt.figure(figsize=(20, 12))
+plot_tree(dt_pruned, 
+          filled=True, 
+          rounded=True, 
+          feature_names=feature_names, 
+          class_names=class_names,
+          fontsize=10)
+plt.title("Pruned Decision Tree (max_depth=4) - Using plot_tree", fontsize=20)
+plt.savefig("decision_tree_matplotlib.png")
+print("Saved decision_tree_matplotlib.png")
+
+# Use Scikit-learn to export the tree in Graphviz's .dot format
+print("\nGenerating .dot data for Graphviz using 'export_graphviz'...")
+dot_data = export_graphviz(dt_pruned, 
+                           out_file=None, # Export as a string
+                           feature_names=feature_names,  
+                           class_names=class_names,  
+                           filled=True, 
+                           rounded=True,  
+                           special_characters=True)  
+
+print("--- .dot data for Graphviz starts below ---")
+print(dot_data)
+print("--- .dot data for Graphviz ends above ---")
+print("--- Done ---")
+
+
+# --- 3. Train a Random Forest and Compare Accuracy ---
+print("\n--- 3. Training Random Forest & Comparing Accuracy ---")
+rf = RandomForestClassifier(n_estimators=100, random_state=42)
+rf.fit(X_train, y_train)
+
+y_pred_rf = rf.predict(X_test)
+test_accuracy_rf = accuracy_score(y_test, y_pred_rf)
+
+print(f"Pruned Decision Tree Test Accuracy: {test_accuracy_pruned:.4f}")
+print(f"Random Forest Test Accuracy: {test_accuracy_rf:.4f}")
+print("--- Done ---")
+
+
+# --- 4. Interpret Feature Importances ---
+print("\n--- 4. Interpreting Feature Importances (from Random Forest) ---")
+importances = rf.feature_importances_
+feature_importance_series = pd.Series(importances, index=feature_names).sort_values(ascending=False)
+
+print("Top Feature Importances:")
+print(feature_importance_series.head())
+
+# Visualize Feature Importances
+print("\nGenerating visualization for feature importances (feature_importances.png)...")
+plt.figure(figsize=(10, 7))
+feature_importance_series.plot(kind='barh')
+plt.title("Feature Importances from Random Forest")
+plt.xlabel("Importance")
+plt.ylabel("Feature")
+plt.gca().invert_yaxis()
+plt.tight_layout()
+plt.savefig("feature_importances.png")
+print("Saved feature_importances.png")
+print("--- Done ---")
+
+
+# --- 5. Evaluate Using Cross-Validation ---
+print("\n--- 5. Evaluating Models with 10-Fold Cross-Validation ---")
+
+# Cross-Validation for the Pruned Decision Tree
+print("Cross-Validation: Pruned Decision Tree (max_depth=4)")
+dt_cv_scores = cross_val_score(dt_pruned, X, y, cv=10, scoring='accuracy')
+print(f"Mean CV Accuracy: {dt_cv_scores.mean():.4f} (Std: {dt_cv_scores.std():.4f})")
+
+# Cross-Validation for the Random Forest
+print("\nCross-Validation: Random Forest (n_estimators=100)")
+rf_cv_scores = cross_val_score(rf, X, y, cv=10, scoring='accuracy')
+print(f"Mean CV Accuracy: {rf_cv_scores.mean():.4f} (Std: {rf_cv_scores.std():.4f})")
+print("--- Done ---")
+
+print("\n\n--- Analysis Complete ---")
